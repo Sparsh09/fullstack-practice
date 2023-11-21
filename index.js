@@ -43,11 +43,28 @@ function handleCounterSum(req, res) {
   res.send("The answer to " + counter + " sum is " + ans);
 }
 
+function handleSum(req, res) {
+  var counter = req.headers.counter;
+  var ans = calculateSum(counter);
+  res.send("The answer to " + counter + " sum is " + ans);
+}
+
+function middleware1(req, res, next) {
+  console.log(" from inside middleware " + req.headers.counter);
+  next();
+}
+
+app.use(middleware1);
+
 app.get("/", handleFirstRequest);
 
 app.get("/palindrome", isPalindrome);
 
 app.get("/counter", handleCounterSum);
+
+app.post("/handleSum", handleCounterSum);
+
+app.post("/handleSum1", handleSum);
 
 function handleStart() {
   console.log("App listening on port " + port);
