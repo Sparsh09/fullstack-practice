@@ -1,6 +1,8 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const app = express();
 const port = 3000;
+let numberOfRequests = 0;
 
 function calculateSum(n) {
   var sum = 0;
@@ -39,22 +41,68 @@ function handleFirstRequest(req, res) {
 
 function handleCounterSum(req, res) {
   var counter = req.query.counter;
+  console.log(counter);
   var ans = calculateSum(counter);
-  res.send("The answer to " + counter + " sum is " + ans);
+  res.send({ sum: ans });
 }
 
 function handleSum(req, res) {
-  var counter = req.headers.counter;
-  var ans = calculateSum(counter);
-  res.send("The answer to " + counter + " sum is " + ans);
+  console.log(req.body);
+  // var counter = req.headers.counter;
+  var counter = req.body.counter;
+  if (counter < 1000000) {
+    console.log(counter);
+    var ans = calculateSum(counter);
+    res.send("The answer to " + counter + " sum is " + ans);
+  } else {
+    res.status(411).send("You have send a large number");
+  }
 }
 
-function middleware1(req, res, next) {
-  console.log(" from inside middleware " + req.headers.counter);
-  next();
+// function middleware1(req, res, next) {
+//   console.log(" from inside middleware " + req.headers.counter);
+//   numberOfRequests += 1;
+//   console.log("The number of requests made is " + numberOfRequests);
+//   next();
+// }
+
+function handleNewCounter(req, res) {
+  var counter = req.body.counters;
+
+  var ans = {
+    sum: calculateSum(counter),
+    mul: calculateMul(counter),
+  };
+
+  res.status(200).send(ans);
 }
 
-app.use(middleware1);
+function calculateMul(counter) {
+  console.log(counter);
+  var mul = 1;
+  for (var i = 1; i <= counter; i++) {
+    mul *= i;
+  }
+  console.log(mul);
+  return mul;
+}
+
+function givePage(req, res) {
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello From Title</title>
+</head>
+<body>
+    <b>Hi There</b>
+</body>
+</html>`);
+}
+
+app.use(bodyParser.json());
+// app.use(middleware1);
 
 app.get("/", handleFirstRequest);
 
@@ -65,6 +113,10 @@ app.get("/counter", handleCounterSum);
 app.post("/handleSum", handleCounterSum);
 
 app.post("/handleSum1", handleSum);
+
+app.post("/handleCounter", handleNewCounter);
+
+app.get("/givePage", givePage);
 
 function handleStart() {
   console.log("App listening on port " + port);
