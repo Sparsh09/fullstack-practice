@@ -1,20 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToDo</title>
-    <script type="text/javascript" src="./index.js"></script>
-</head>
-<body>
-    <form>
-        <input type="text"  placeholder="enter title">
-
-        <input type="text"  placeholder="enter description">
-
-        <input type="text"  placeholder="enter status">
+  </head>
+  <body>
+    <form id="formData">
+      <input type="text" placeholder="enter title" id="title" />
+      <input type="text" placeholder="enter description" id="description" />
+      <input type="text" placeholder="enter is completed" id="completed" />
+      <button type="button" onclick="submitForm()">Submit</button>
     </form>
 
-    <button (click)="submitForm()">Submit</button>
-</body>
+    <script type="text/javascript">
+      function submitForm() {
+        const title = document.getElementById("title").value;
+        const description = document.getElementById("description").value;
+        const completed = document.getElementById("completed").value;
+
+        const data = {
+          title,
+          description,
+          completed,
+        };
+
+        const param = {
+          body: JSON.stringify(data),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+
+        fetch("http://localhost:3000/todos", param);
+      }
+    </script>
+  </body>
 </html>

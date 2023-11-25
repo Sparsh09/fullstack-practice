@@ -9,9 +9,6 @@ var id = 0;
 function getTodos(req, res) {
   res.status(200).send(todos);
 }
-function submit(data) {
-  console.log(data);
-}
 function addToFile(data) {
   fs.writeFile("./todo.txt", JSON.stringify(data), (err) => {
     console.log(err);
