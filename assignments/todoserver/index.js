@@ -7,30 +7,29 @@ var todos = [];
 var id = 0;
 
 function getTodos(req, res) {
-  res.status(200).send(todos);
-}
-function addToFile(data) {
-  fs.writeFile("./todo.txt", JSON.stringify(data), (err) => {
-    console.log(err);
-  });
-  fs.readFile("./todo.txt", (d) => {
-    console.log(d);
-    console.log("read successfully");
+  fs.readFile("todos.json", "utf8", (err, data) => {
+    var ans = JSON.parse(data);
+    res.json(ans);
   });
 }
 
 function createTodo(req, res) {
   const body = req.body;
-  id += 1;
-  todos.push({
+  id += Math.floor(Math.random() * 1000000);
+  const newTodo = {
     title: body.title,
     completed: body.completed,
     description: body.description,
     id: id,
+  };
+  fs.readFile("todos.json", "utf8", (err, data) => {
+    const todos = JSON.parse(data);
+    todos.push(newTodo);
+    fs.writeFile("todos.json", JSON.stringify(todos), (err) => {
+      if (err) throw err;
+      res.status(201).json(newTodo);
+    });
   });
-  addToFile(todos);
-  var response = { id: id };
-  res.status(201).send(response);
 }
 
 function handleFirst(req, res) {
@@ -38,28 +37,50 @@ function handleFirst(req, res) {
 }
 
 function getTodoById(req, res) {
-  var data;
-  fs.readFile("./todo.txt", (d) => {
-    data = JSON.parse(d);
+  fs.readFile("todos.json", "utf8", (err, data) => {
+    if (err) throw err;
+    var todos = JSON.parse(data);
+    todos.forEach((todo) => {
+      if (todo.id === Number(req.params.id)) {
+        res.status(200).json(todo);
+      }
+    });
   });
-  console.log(data);
-  res.status(200).send(todos[req.params.id - 1]);
 }
 
 function updateTodoById(req, res) {
   var body = req.body;
-  todos[req.params.id - 1] = {
-    title: body.title,
-    description: body.description,
-    completed: body.completed,
-  };
-  res.status(200).send({ id: req.params.id, updated: true });
+  fs.readFile("todos.json", "utf8", (err, data) => {
+    if (err) throw err;
+    var todos = JSON.parse(data);
+    todos.forEach((todo, index) => {
+      if (todo.id === Number(req.params.id)) {
+        todos[index] = body;
+        fs.writeFile("todos.json", JSON.stringify(todos), (err) => {
+          if (err) throw err;
+          res.status(200).send({ id: req.params.id, updated: true });
+        });
+      }
+    });
+  });
 }
 
 function deleteTodoById(req, res) {
   var id = req.params.id;
-  todos = todos.filter((v) => data.id !== Number(id));
-  res.status(200).send({ id: id, deleted: true });
+  fs.readFile("todos.json", "utf8", (err, data) => {
+    if (err) throw err;
+    var todos = JSON.parse(data);
+    var updatedTodo = [];
+    todos.forEach((todo) => {
+      if (todo.id !== Number(id)) {
+        updatedTodo.push(todo);
+      }
+    });
+    fs.writeFile("todos.json", JSON.stringify(updatedTodo), (err) => {
+      if (err) throw err;
+      res.status(200).json({ id: id, deleted: true });
+    });
+  });
 }
 app.use(bodyParser.json());
 app.get("/todos", getTodos);
