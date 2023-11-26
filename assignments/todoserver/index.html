@@ -6,14 +6,32 @@
     <title>ToDo</title>
   </head>
   <body>
-    <form id="formData">
-      <input type="text" placeholder="enter title" id="title" />
-      <input type="text" placeholder="enter description" id="description" />
-      <input type="text" placeholder="enter is completed" id="completed" />
-      <button type="button" onclick="submitForm()">Submit</button>
-    </form>
-
+    <input type="text" placeholder="enter title" id="title" />
+    <br />
+    <input type="text" placeholder="enter description" id="description" />
+    <br />
+    <input type="text" placeholder="enter is completed" id="completed" />
+    <br />
+    <button type="button" onclick="submitForm()">Submit</button>
+    <button type="button" onclick="getTodoList()">Get Todos</button>
     <script type="text/javascript">
+      function getTodoList() {
+        var list;
+        const param = {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+        fetch("http://localhost:3000/todos", param).then((data) => {
+          data
+            .json()
+            .then((d) => {
+              list = d;
+            })
+            .finally(() => list.forEach((d) => {}));
+        });
+      }
       function submitForm() {
         const title = document.getElementById("title").value;
         const description = document.getElementById("description").value;

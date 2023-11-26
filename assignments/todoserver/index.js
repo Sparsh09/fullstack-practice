@@ -1,10 +1,14 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var fs = require("fs");
+var cors = require("cors");
 var app = express();
 var port = 3000;
-var todos = [];
 var id = 0;
+// to prevent cors errors , we need to send the frontent page from the same origin as the backend
+// app.get("/", (req, res) => {
+//   res.sendFile(__dirname + "/index.html");
+// });
 
 function getTodos(req, res) {
   fs.readFile("todos.json", "utf8", (err, data) => {
