@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToDo</title>
   </head>
-  <body>
+  <body onload="getTodoList()">
     <input type="text" placeholder="enter title" id="title" />
     <br />
     <input type="text" placeholder="enter description" id="description" />
@@ -13,10 +13,12 @@
     <input type="text" placeholder="enter is completed" id="completed" />
     <br />
     <button type="button" onclick="submitForm()">Submit</button>
-    <button type="button" onclick="getTodoList()">Get Todos</button>
+    <!-- <button type="button" onclick="getTodoList()">Get Todos</button> -->
     <script type="text/javascript">
       function getTodoList() {
-        var list;
+        if (document.getElementById("todoList")) {
+          document.getElementById("todoList").remove();
+        }
         const param = {
           method: "GET",
           headers: {
@@ -24,12 +26,20 @@
           },
         };
         fetch("http://localhost:3000/todos", param).then((data) => {
-          data
-            .json()
-            .then((d) => {
-              list = d;
-            })
-            .finally(() => list.forEach((d) => {}));
+          data.json().then((list) => {
+            var div = document.createElement("div");
+            div.id = "todoList";
+            var ul = document.createElement("ul");
+            div.appendChild(ul);
+            list.forEach((d) => {
+              var li = document.createElement("li");
+              var span = document.createElement("span");
+              span.textContent = `title : ${d.title}; description: ${d.description}; completed: ${d.completed}`;
+              li.appendChild(span);
+              ul.appendChild(li);
+            });
+            document.body.appendChild(div);
+          });
         });
       }
       function submitForm() {
@@ -51,7 +61,9 @@
           },
         };
 
-        fetch("http://localhost:3000/todos", param);
+        fetch("http://localhost:3000/todos", param).finally(() =>
+          getTodoList()
+        );
       }
     </script>
   </body>
