@@ -13,8 +13,18 @@
     <input type="text" placeholder="enter is completed" id="completed" />
     <br />
     <button type="button" onclick="submitForm()">Submit</button>
-    <!-- <button type="button" onclick="getTodoList()">Get Todos</button> -->
     <script type="text/javascript">
+      function deleteTodo(id) {
+        const param = {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+        fetch("http://localhost:3000/todos/" + id, param).then(() =>
+          getTodoList()
+        );
+      }
       function getTodoList() {
         if (document.getElementById("todoList")) {
           document.getElementById("todoList").remove();
@@ -34,8 +44,13 @@
             list.forEach((d) => {
               var li = document.createElement("li");
               var span = document.createElement("span");
+              span.setAttribute("id", d.id);
               span.textContent = `title : ${d.title}; description: ${d.description}; completed: ${d.completed}`;
               li.appendChild(span);
+              var button = document.createElement("button");
+              button.textContent = "Delete";
+              button.onclick = () => deleteTodo(d.id);
+              li.appendChild(button);
               ul.appendChild(li);
             });
             document.body.appendChild(div);
