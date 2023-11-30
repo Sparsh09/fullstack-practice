@@ -7,43 +7,55 @@ let ADMINS = [];
 let USERS = [];
 let COURSES = [];
 
+function adminAuthentication(req, res, next) {
+  var { username, password } = req.headers;
+  var user = ADMINS.find(
+    (admin) => admin.username === username && admin.password === password
+  );
+  if (user) {
+    next();
+  } else {
+    res.status(403).json({ message: "Admin Authentication Failed" });
+  }
+}
+
+function userAuthentication(req, res, next) {
+  var { username, password } = req.headers;
+  var user = USERS.find(
+    (user) => user.username === username && user.password === password
+  );
+  if (user) {
+    next();
+  } else {
+    res.status(403).json({ message: "User Authentication Failed" });
+  }
+}
+
 // Admin routes
 app.post("/admin/signup", (req, res) => {
   // logic to sign up admin
   var body = req.body;
-  if (body.email.length > 0 && body.password.length > 0) {
-    var existingAdmin = ADMINS.find((value) => value.email === body.email);
+  if (body.username.length > 0 && body.password.length > 0) {
+    var existingAdmin = ADMINS.find(
+      (value) => value.username === body.username
+    );
     if (ADMINS.length > 0 && existingAdmin) {
-      res.status(403).json({ message: "This email is already registered" });
+      res.status(403).json({ message: "This username is already registered" });
     } else {
-      ADMINS.push({ email: body.email, password: body.password });
+      ADMINS.push({ username: body.username, password: body.password });
       res.json({ message: "ADMIN create successfully" });
     }
   } else {
-    res.status(403).json({ message: "Invalid email or password" });
+    res.status(403).json({ message: "Invalid username or password" });
   }
 });
 
-app.post("/admin/login", (req, res) => {
+app.post("/admin/login", adminAuthentication, (req, res) => {
   // logic to log in admin
-  var body = req.body;
-  if (body.email.length > 0 && body.password.length > 0) {
-    var existingAdmin = ADMINS.find((value) => value.email === body.email);
-    if (existingAdmin) {
-      if (existingAdmin.password === body.password) {
-        res.json({ message: "Login Successfully" });
-      } else {
-        res.status(400).json({ message: "Wrong Password" });
-      }
-    } else {
-      res.status(404).json({ message: "Email Not Found" });
-    }
-  } else {
-    res.status(400).json({ message: "Invalid email or password" });
-  }
+  res.json({ message: "Login successfully" });
 });
 
-app.post("/admin/courses", (req, res) => {
+app.post("/admin/courses", adminAuthentication, (req, res) => {
   // logic to create a course
   var body = req.body;
   var id = Date.now();
@@ -51,50 +63,64 @@ app.post("/admin/courses", (req, res) => {
   if (existingCourse) {
     res.status(400).json({ message: "Course already exists" });
   } else {
-    COURSES.push({ course: body.course, id: id });
+    var course = req.body;
+    course.id = id;
+    COURSES.push(course);
     res.json({ message: "Course Created", id: id });
   }
 });
 
-app.put("/admin/courses/:courseId", (req, res) => {
+app.put("/admin/courses/:courseId", adminAuthentication, (req, res) => {
   // logic to edit a course
-  var id = req.params.id;
+  var id = Number(req.params.courseId);
   var body = req.body;
-  console.log(id, body.course);
   var course = COURSES.find((courseData) => courseData.id === id);
   if (course) {
-    var indexValue = -1;
-
-    COURSES.forEach((courseData, index) => {
-      if (courseData.id === course.id) {
-        indexValue = index;
-      }
-    });
-    COURSES[indexValue] = body.course;
+    Object.assign(course, body);
     res.json({ message: "Course Updated", id: id });
   } else {
     res.status(404).json({ message: "Course Not Found", id: id });
   }
 });
 
-app.get("/admin/courses", (req, res) => {
+app.get("/admin/courses", adminAuthentication, (req, res) => {
   // logic to get all courses
+  res.json({ courses: COURSES });
 });
 
 // User routes
 app.post("/users/signup", (req, res) => {
   // logic to sign up user
+  var body = req.body;
+
+  if (body.username.length > 0 && body.password.length > 0) {
+    if (
+      USERS.length === 0 ||
+      !USERS.find((user) => user.username === body.username)
+    ) {
+      var id = Date.now();
+      var user = { ...body, id: id, purchaseCourse: [] };
+      USERS.push(user);
+      res.json({ message: "User Added", id: id });
+    } else {
+      res.status(403).json({ message: "User Already Exsists", id: id });
+    }
+  } else {
+    res.status(404).json({ message: "username or Password Invalid" });
+  }
 });
 
-app.post("/users/login", (req, res) => {
+app.post("/users/login", userAuthentication, (req, res) => {
   // logic to log in user
+  res.json({ message: "Login Successful" });
 });
 
-app.get("/users/courses", (req, res) => {
+app.get("/users/courses", userAuthentication, (req, res) => {
   // logic to list all courses
+  res.json({ courses: COURSES.filter((course) => course.published) });
 });
 
-app.post("/users/courses/:courseId", (req, res) => {
+app.post("/users/courses/:courseId", userAuthentication, (req, res) => {
   // logic to purchase a course
 });
 
