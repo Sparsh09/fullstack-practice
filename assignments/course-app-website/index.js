@@ -76,7 +76,8 @@ app.put("/admin/courses/:courseId", adminAuthentication, (req, res) => {
   var body = req.body;
   var course = COURSES.find((courseData) => courseData.id === id);
   if (course) {
-    Object.assign(course, body);
+    COURSES = COURSES.filter((c) => c.id !== course.id);
+    COURSES.push(body);
     res.json({ message: "Course Updated", id: id });
   } else {
     res.status(404).json({ message: "Course Not Found", id: id });
@@ -122,6 +123,21 @@ app.get("/users/courses", userAuthentication, (req, res) => {
 
 app.post("/users/courses/:courseId", userAuthentication, (req, res) => {
   // logic to purchase a course
+  const courseId = req.params.courseId;
+  console.log(courseId);
+  const course = COURSES.find((c) => {
+    console.log(c["id"], c, courseId);
+    return c.id === Number(courseId);
+  });
+  if (course) {
+    USERS.map((u) => {
+      if (u.email === req.body.email) {
+        console.log(u.purchaseCourse);
+      }
+    });
+  } else {
+    res.status(404).json({ message: "Course not found" });
+  }
 });
 
 app.get("/users/purchasedCourses", (req, res) => {
