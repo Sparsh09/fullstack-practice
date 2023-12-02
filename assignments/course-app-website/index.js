@@ -25,6 +25,7 @@ function userAuthentication(req, res, next) {
     (user) => user.username === username && user.password === password
   );
   if (user) {
+    req.user = user; // this will pass the authenticated user to the request and on next the funnction will get this user
     next();
   } else {
     res.status(403).json({ message: "User Authentication Failed" });
@@ -77,6 +78,7 @@ app.put("/admin/courses/:courseId", adminAuthentication, (req, res) => {
   var course = COURSES.find((courseData) => courseData.id === id);
   if (course) {
     COURSES = COURSES.filter((c) => c.id !== course.id);
+    body.id = id;
     COURSES.push(body);
     res.json({ message: "Course Updated", id: id });
   } else {
@@ -124,24 +126,21 @@ app.get("/users/courses", userAuthentication, (req, res) => {
 app.post("/users/courses/:courseId", userAuthentication, (req, res) => {
   // logic to purchase a course
   const courseId = req.params.courseId;
-  console.log(courseId);
   const course = COURSES.find((c) => {
-    console.log(c["id"], c, courseId);
     return c.id === Number(courseId);
   });
   if (course) {
-    USERS.map((u) => {
-      if (u.email === req.body.email) {
-        console.log(u.purchaseCourse);
-      }
-    });
+    req.user.purchaseCourse.push(course);
+    res.json({ message: "Course purchase successfully" });
   } else {
     res.status(404).json({ message: "Course not found" });
   }
 });
 
-app.get("/users/purchasedCourses", (req, res) => {
+app.get("/users/purchasedCourses", userAuthentication, (req, res) => {
   // logic to view purchased courses
+  const user = USERS.filter((u) => u.username === req.user.username);
+  res.json(user[0].purchaseCourse);
 });
 app.listen(3000, () => {
   console.log("Server is listening on port 3000");
