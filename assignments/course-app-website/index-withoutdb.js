@@ -82,17 +82,18 @@ function userAuthentication(req, res, next) {
 }
 
 // Admin routes
-app.post("/admin/signup", async (req, res) => {
+app.post("/admin/signup", (req, res) => {
   // logic to sign up admin
-  var { username, password } = req.body;
+  var body = req.body;
   if (body.username.length > 0 && body.password.length > 0) {
-    var existingAdmin = await Admin.findOne({ username });
-
-    if (existingAdmin) {
+    var existingAdmin = ADMINS.find(
+      (value) => value.username === body.username
+    );
+    if (ADMINS.length > 0 && existingAdmin) {
       res.status(403).json({ message: "This username is already registered" });
     } else {
-      const newAdmin = new Admin({ username, password });
-      await newAdmin.save();
+      const admin = { username: body.username, password: body.password };
+      ADMINS.push(admin);
       const token = generateToken(admin);
       res.json({ message: "ADMIN create successfully", token: token });
     }
