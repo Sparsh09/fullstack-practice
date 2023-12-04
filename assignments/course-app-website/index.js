@@ -107,6 +107,7 @@ app.post("/admin/login", adminAuthentication, (req, res) => {
     username: req.headers.username,
     password: req.headers.password,
   };
+  console.log();
   if (
     ADMINS.find(
       (a) => a.username === admin.username && a.password === admin.password
