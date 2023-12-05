@@ -55,31 +55,25 @@ function verifyToken(req, res, next) {
     res.sendStatus(401);
   }
 }
-
-function adminAuthentication(req, res, next) {
+adminAuthentication = async (req, res, next) => {
   var { username, password } = req.headers;
-  var user = ADMINS.find(
-    (admin) => admin.username === username && admin.password === password
-  );
+  var user = await Admin.find({ username, password });
   if (user) {
     next();
   } else {
     res.status(403).json({ message: "Admin Authentication Failed" });
   }
-}
-
-function userAuthentication(req, res, next) {
+};
+userAuthentication = async (req, res, next) => {
   var { username, password } = req.headers;
-  var user = USERS.find(
-    (user) => user.username === username && user.password === password
-  );
+  var user = User.find({ username, password });
   if (user) {
     req.user = user; // this will pass the authenticated user to the request and on next the funnction will get this user
     next();
   } else {
     res.status(403).json({ message: "User Authentication Failed" });
   }
-}
+};
 
 // Admin routes
 app.post("/admin/signup", async (req, res) => {
@@ -101,15 +95,14 @@ app.post("/admin/signup", async (req, res) => {
   }
 });
 
-app.post("/admin/login", adminAuthentication, (req, res) => {
+app.post("/admin/login", adminAuthentication, async (req, res) => {
   // logic to log in admin
   const admin = {
     username: req.headers.username,
     password: req.headers.password,
   };
-  console.log();
   if (
-    ADMINS.find(
+    await ADMINS.findOne(
       (a) => a.username === admin.username && a.password === admin.password
     )
   ) {
@@ -120,56 +113,47 @@ app.post("/admin/login", adminAuthentication, (req, res) => {
   }
 });
 
-app.post("/admin/courses", verifyToken, (req, res) => {
+app.post("/admin/courses", verifyToken, async (req, res) => {
   // logic to create a course
-  var course = req.body;
-  var id = Date.now();
+  var course = new Course(req.body);
   var existingCourse = COURSES.find((c) => c.id === id);
   if (existingCourse) {
     res.status(400).json({ message: "Course already exists" });
   } else {
-    course.id = id;
-    COURSES.push(course);
+    await course.save();
     res.json({ message: "Course Created", id: id });
   }
 });
 
-app.put("/admin/courses/:courseId", verifyToken, (req, res) => {
+app.put("/admin/courses/:courseId", verifyToken, async (req, res) => {
   // logic to edit a course
   var id = Number(req.params.courseId);
   var body = req.body;
-  var course = COURSES.find((courseData) => courseData.id === id);
+  const course = await Course.findByIdAndUpdate(id, body, { new: true });
   if (course) {
-    COURSES = COURSES.filter((c) => c.id !== course.id);
-    body.id = id;
-    COURSES.push(body);
     res.json({ message: "Course Updated", id: id });
   } else {
     res.status(404).json({ message: "Course Not Found", id: id });
   }
 });
 
-app.get("/admin/courses", verifyToken, (req, res) => {
+app.get("/admin/courses", verifyToken, async (req, res) => {
   // logic to get all courses
-  res.json({ courses: COURSES });
+  res.json({ courses: await Course.find({ published: true }) });
 });
 
 // User routes
-app.post("/users/signup", (req, res) => {
+app.post("/users/signup", async (req, res) => {
   // logic to sign up user
   var body = req.body;
 
   if (body.username.length > 0 && body.password.length > 0) {
-    if (
-      USERS.length === 0 ||
-      !USERS.find((user) => user.username === body.username)
-    ) {
-      var id = Date.now();
-      var user = { ...body, id: id, purchaseCourse: [] };
-      USERS.push(user);
-      res.json({ message: "User Added", id: id, token: generateToken(user) });
+    if (await User.find({ username: body.username, password: body.password })) {
+      var user = new User({ ...body, purchaseCourse: [] });
+      await user.save();
+      res.json({ message: "User Added", token: generateToken(user) });
     } else {
-      res.status(403).json({ message: "User Already Exsists", id: id });
+      res.status(403).json({ message: "User Already Exsists" });
     }
   } else {
     res.status(404).json({ message: "username or Password Invalid" });
@@ -185,25 +169,24 @@ app.post("/users/login", userAuthentication, (req, res) => {
   });
 });
 
-app.get("/users/courses", verifyToken, (req, res) => {
+app.get("/users/courses", verifyToken, async (req, res) => {
   // logic to list all courses
-  res.json({ courses: COURSES.filter((course) => course.published) });
+  res.json({ courses: await Course.find({ published: true }) });
 });
 
-app.post("/users/courses/:courseId", verifyToken, (req, res) => {
+app.post("/users/courses/:courseId", verifyToken, async (req, res) => {
   // logic to purchase a course
   const courseId = req.params.courseId;
-  const course = COURSES.find((c) => {
-    return c.id === Number(courseId);
-  });
+  const course = await Course.find({ id: courseId });
   if (course) {
-    USERS.forEach((u) => {
-      if (u.username === req.user.username) {
-        u.purchaseCourse.push(course);
-      }
-    });
-    // req.user.purchaseCourse.push(course);
-    res.json({ message: "Course purchase successfully" });
+    const user = await User.find({ username: req.user.username });
+    if (user) {
+      user.purchaseCourse.push(course);
+      await user.save();
+      res.json({ message: "Course purchase successfully" });
+    } else {
+      res.status(403).json({ message: "User not found" });
+    }
   } else {
     res.status(404).json({ message: "Course not found" });
   }
