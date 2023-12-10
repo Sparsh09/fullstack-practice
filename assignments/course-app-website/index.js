@@ -34,7 +34,7 @@ const Admin = mongoose.model("Admin", adminSchema);
 const Course = mongoose.model("Course", courseSchema);
 
 mongoose.connect(
-  "mongodb+srv://geekyprogrammer99:4MhxGWGudBOqa0IZ@cluster0.pyrb1ni.mongodb.net/"
+  "mongodb+srv://geekyprogrammer99:4MhxGWGudBOqa0IZ@cluster0.pyrb1ni.mongodb.net/courses"
 );
 function generateToken(user) {
   return jwt.sign(user, SECRET_KEY);
@@ -79,7 +79,7 @@ userAuthentication = async (req, res, next) => {
 app.post("/admin/signup", async (req, res) => {
   // logic to sign up admin
   var { username, password } = req.body;
-  if (body.username.length > 0 && body.password.length > 0) {
+  if (username.length > 0 && password.length > 0) {
     var existingAdmin = await Admin.findOne({ username });
 
     if (existingAdmin) {
@@ -87,7 +87,7 @@ app.post("/admin/signup", async (req, res) => {
     } else {
       const newAdmin = new Admin({ username, password });
       await newAdmin.save();
-      const token = generateToken(admin);
+      const token = generateToken({ username, password });
       res.json({ message: "ADMIN create successfully", token: token });
     }
   } else {
@@ -102,9 +102,7 @@ app.post("/admin/login", adminAuthentication, async (req, res) => {
     password: req.headers.password,
   };
   if (
-    await ADMINS.findOne(
-      (a) => a.username === admin.username && a.password === admin.password
-    )
+    await Admin.findOne({ username: admin.username, password: admin.password })
   ) {
     const token = generateToken(admin);
     res.json({ message: "Login successfully", token: token });
@@ -116,18 +114,18 @@ app.post("/admin/login", adminAuthentication, async (req, res) => {
 app.post("/admin/courses", verifyToken, async (req, res) => {
   // logic to create a course
   var course = new Course(req.body);
-  var existingCourse = COURSES.find((c) => c.id === id);
+  var existingCourse = await Course.findOne({ title: course.title });
   if (existingCourse) {
     res.status(400).json({ message: "Course already exists" });
   } else {
     await course.save();
-    res.json({ message: "Course Created", id: id });
+    res.json({ message: "Course Created", id: course.id });
   }
 });
 
 app.put("/admin/courses/:courseId", verifyToken, async (req, res) => {
   // logic to edit a course
-  var id = Number(req.params.courseId);
+  var id = req.params.courseId;
   var body = req.body;
   const course = await Course.findByIdAndUpdate(id, body, { new: true });
   if (course) {
@@ -192,9 +190,9 @@ app.post("/users/courses/:courseId", verifyToken, async (req, res) => {
   }
 });
 
-app.get("/users/purchasedCourses", verifyToken, (req, res) => {
+app.get("/users/purchasedCourses", verifyToken, async (req, res) => {
   // logic to view purchased courses
-  const user = USERS.filter((u) => u.username === req.user.username);
+  const user = await User.find({ username: req.user.username });
   res.json(user[0].purchaseCourse);
 });
 app.listen(3000, () => {
