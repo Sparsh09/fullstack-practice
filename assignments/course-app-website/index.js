@@ -3,7 +3,7 @@ const app = express();
 var bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
-
+require("dotenv").config();
 app.use(express.json());
 let ADMINS = [];
 let USERS = [];
@@ -32,10 +32,8 @@ const courseSchema = new mongoose.Schema({
 const User = mongoose.model("User", userSchema);
 const Admin = mongoose.model("Admin", adminSchema);
 const Course = mongoose.model("Course", courseSchema);
+mongoose.connect(process.env.URL);
 
-mongoose.connect(
-  "mongodb+srv://geekyprogrammer99:4MhxGWGudBOqa0IZ@cluster0.pyrb1ni.mongodb.net/courses"
-);
 function generateToken(user) {
   return jwt.sign(user, SECRET_KEY);
 }
