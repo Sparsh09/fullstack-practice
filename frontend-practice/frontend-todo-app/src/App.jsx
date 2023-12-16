@@ -28,9 +28,12 @@ function Todo(todoItem) {
   const { title, description, id } = todoItem.todo;
   return (
     <div key={id}>
-      {title}&nbsp;
-      {description}&nbsp;
-      <button>Delete</button>
+      <div style={{ display: "flex" }}>
+        {title}
+        <span>{description}</span>
+        <button>Delete</button>
+      </div>
+      <br></br>
     </div>
   );
 }
