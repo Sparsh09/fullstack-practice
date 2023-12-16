@@ -54,9 +54,16 @@ function AddCourse() {
             onClick={() => {
               fetch("http://localhost:3000/admin/courses", {
                 method: "POST",
-                body: JSON.stringify({ course: { title, description } }),
+                body: JSON.stringify({
+                  title: title,
+                  description: description,
+                  price: 5999,
+                  imageLink:
+                    "https://www.shutterstock.com/image-vector/cartoon-cute-character-funny-illustration-600nw-2320715743.jpg",
+                  published: true,
+                }),
                 headers: {
-                  "Authorization": "Bearer " + localStorage.getItem("token"),
+                  Authorization: "Bearer " + localStorage.getItem("token"),
                   "Content-Type": "application/json",
                 },
               })
@@ -65,6 +72,7 @@ function AddCourse() {
                 })
                 .then((data) => {
                   console.log(data);
+                  alert("Course Added !!");
                 });
             }}
           >
