@@ -3,11 +3,11 @@ const app = express();
 var bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const cors = require("cors");
 require("dotenv").config();
+app.use(cors());
 app.use(express.json());
-let ADMINS = [];
-let USERS = [];
-let COURSES = [];
+
 const SECRET_KEY = "IRON-MAN";
 
 const userSchema = new mongoose.Schema({
@@ -93,6 +93,12 @@ app.post("/admin/signup", async (req, res) => {
   }
 });
 
+app.get("/admin/me", verifyToken, (req, res) => {
+  res.json({
+    username: req.user.username,
+  });
+});
+
 app.post("/admin/login", adminAuthentication, async (req, res) => {
   // logic to log in admin
   const admin = {
@@ -126,6 +132,7 @@ app.put("/admin/courses/:courseId", verifyToken, async (req, res) => {
   var id = req.params.courseId;
   var body = req.body;
   const course = await Course.findByIdAndUpdate(id, body, { new: true });
+  console.log(id , body, course);
   if (course) {
     res.json({ message: "Course Updated", id: id });
   } else {
@@ -170,10 +177,20 @@ app.get("/users/courses", verifyToken, async (req, res) => {
   res.json({ courses: await Course.find({ published: true }) });
 });
 
+app.get("/admin/courses/:courseId", verifyToken, async (req, res) => {
+  const courseId = req.params.courseId;
+  const course =await Course.findOne({ _id: courseId });
+  if (course) {
+    res.json({course});
+  } else {
+    res.status(404).send({ message: "Course Not Found" });
+  }
+});
+
 app.post("/users/courses/:courseId", verifyToken, async (req, res) => {
   // logic to purchase a course
   const courseId = req.params.courseId;
-  const course = await Course.find({ id: courseId });
+  const course = await Course.find({ _id: courseId });
   if (course) {
     const user = await User.find({ username: req.user.username });
     if (user) {
